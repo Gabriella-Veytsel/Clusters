@@ -9,8 +9,8 @@
 # BiocManager::install("ggtree")
 
 lapply(c(
-  "conflicted", "rjson","tidyverse","janitor","lubridate","forstringr","rio","ape","treeio","ggtree","geiger","magrittr","stringr",
-  "phylobase","scales","ggplot2","cowplot","ggridges","ggthemes", "arsenal"), library, character.only = TRUE)
+  "rjson","tidyverse","janitor","lubridate","forstringr","rio","ape","treeio","ggtree","geiger","magrittr","stringr",
+  "phylobase","scales","ggplot2", "systemfonts", "svglite", "cowplot","ggridges","ggthemes", "arsenal"), library, character.only = TRUE)
 
 source("/home/gev25289/work/Distinct Clusters Leke Function.R")
 
@@ -271,7 +271,7 @@ p34 <- p + geom_hilight(data=nodelist_supported, mapping=aes(node=Node),
                         size=0.4, extend = 0.1) 
 
 plot_grid(p344, p58, p34, ncol=3, labels = c("A", "B", "C"))
-# ggsave("/scratch/gev25289/workdir/georgia/delta/figures/tree_highlights.pdf", width=15, height=7)
+ggsave("/scratch/gev25289/workdir/georgia/delta/figures/tree_highlights.pdf", width=15, height=7)
 
 # Figure: Number of Sequences over Time (Bubble Plot)
 #####################################################
@@ -388,10 +388,32 @@ p + geom_hilight(data=problems, mapping=aes(node=Node),
 first_detection %>% filter(type == "Singleton") %>% select(date_dff) %>% summary() #mean = 222.5 days, range 4-494 days
 first_detection %>% filter(type == "Cluster") %>% select(date_dff) %>% summary() #mean = 34.07 days, range 0-147 days
 
+#Singleton nested within a cluster
+tips(new.tree@phylo, 10105) #Looking for singleton USA_GA-CDC-ASC210094578_2021_2021-09-23_38_DeKalb (Node = 963, parent = 10105)
+test <- tree_subset(new.tree, node = 963, levels_back = 1)
+test %>% 
+  ggtree(aes(color = division)) + 
+  geom_tippoint(aes(color = division)) +
+  geom_nodepoint() +
+  geom_tiplab() + 
+  theme_tree2() + 
+  xlim(0,10)
+
+#Singleton not nested within a cluster (polytomy)
+tips(new.tree@phylo, 37) 
+test <- tree_subset(new.tree, node = 37, levels_back = 2)
+test %>% 
+  ggtree(aes(color = division)) + 
+  geom_tippoint(aes(color = division)) +
+  geom_nodepoint() +
+  geom_tiplab() + 
+  theme_tree2() + 
+  xlim(0,10)
+
 # Overlaid histograms
 ggplot(first_detection, aes(x=date_dff, fill=type)) +
   geom_histogram(color="black", alpha=0.5) + #position = identity overlaps the bars, instead of stacking
-  labs(title="Coalescent Times of 344 Introduction Events into Georgia", x="Coalescent Time (Days)", y = "Count", fill = NULL) + #remove legend title with fill/color = NULL
+  labs(title="", x="Coalescent Time (Days)", y = "Count", fill = NULL) + #remove legend title with fill/color = NULL, Coalescent Times of 344 Introduction Events into Georgia
   theme_classic() +
   theme(plot.title = element_text(size = 10))
 ggsave("/scratch/gev25289/workdir/georgia/delta/figures/coalescenttimes_firstdetection.pdf", width=6, height=3)
@@ -401,6 +423,6 @@ ggplot(firstdetection_edit, aes(x=date_dff)) +
   geom_histogram(color="black", alpha=0.5) + #position = identity overlaps the bars, instead of stacking
   labs(x="Coalescent Time (Days)", y = "Count", fill = NULL) + #remove legend title with fill/color = NULL
   theme_classic() + 
-  ggtitle(expression("Coalescent Times of 189 Introduction Events into Georgia Resulting in" * phantom() >= phantom() * "2 Descendants")) +
+  #ggtitle(expression("Coalescent Times of 189 Introduction Events into Georgia Resulting in" * phantom() >= phantom() * "2 Descendants")) +
   theme(plot.title = element_text(size = 10))
 ggsave("/scratch/gev25289/workdir/georgia/delta/figures/coalescenttimes_firstdetection_2tips.pdf", width=6, height=3)
