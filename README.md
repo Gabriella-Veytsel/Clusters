@@ -1,4 +1,4 @@
-10.5281/zenodo.18363389
+[![DOI](https://zenodo.org/badge/947546286.svg)](https://doi.org/10.5281/zenodo.18363388)
 
 **Phylogenetic Insights into SARS-CoV-2 Introductions and Spread in Georgia**
 
