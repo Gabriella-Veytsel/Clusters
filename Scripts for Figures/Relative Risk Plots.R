@@ -2,7 +2,6 @@ library(bayestestR)
 library(tidyverse)
 library(cowplot)
 
-#Do I need this?
 clusters <- c(1, 2, 3, 4, 5, 6, 9, 11, 12, 13, 14, 15, 16, 17, 18, 20, 23, 24, 28, 29, 30, 32, 33, 34)
 ClusterLevels24 <- c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5", "Cluster 6",  "Cluster 9", "Cluster 11", "Cluster 12", "Cluster 13","Cluster 14", "Cluster 15", "Cluster 16", "Cluster 17", "Cluster 18", "Cluster 20", "Cluster 23", "Cluster 24", "Cluster 28", "Cluster 29", "Cluster 30", "Cluster 32", "Cluster 33", "Cluster 34")
 

@@ -23,7 +23,7 @@ pop <- read_csv("C:/Users/gev25289/Desktop/xps/georgia/raw data/georgia county p
 pop <- pop %>% left_join(income, by = c("county" = "County"))
 pop <- pop %>% left_join(landarea, by = c("county" = "County"))
 
-metadata_delta_highcov <- read_tsv("C:/Users/gev25289/Desktop/xps/georgia/delta_highcoverage.tsv")
+metadata_delta_highcov <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/delta_highcoverage.tsv")
 metadata_delta_highcov_ag <- metadata_delta_highcov %>% group_by(location) %>% summarize(seqs=n())
 metadata_delta_highcov_ag$location <- gsub("_", " ", metadata_delta_highcov_ag$location)
 

@@ -15,14 +15,17 @@ library(phylotools) #read.fasta
 source("C:/Users/gev25289/Desktop/xps/georgia/code/functions.R")
 `%!in%` = Negate(`%in%`)
 
-metadata_delta_2023 <- read_tsv("C:/Users/gev25289/Desktop/xps/georgia/GISAID/georgia delta complete high_cov collect/combined.tsv") %>%
+# Complete, high coverage genomes, Delta 
+metadata_delta_2023 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/georgia delta complete high_cov collect/combined.tsv") %>%
   filter(strain != "strain") %>% mutate(date = as.Date(date, "%Y-%m-%d")) %>%
   select(-length) %>%
   mutate(date_submitted = as.Date(date_submitted, "%Y-%m-%d")) %>% 
   filter(gisaid_epi_isl %!in% c("EPI_ISL_3640412", "EPI_ISL_3640461")) %>% #When matching to fasta, discovered that 2 isolates (GISAID Name: hCoV-19/USA/GA-GD-081721-21072022899/2021 and hCoV-19/USA/GA-GD-081721-21071922011/2021) each have 2 GISAID Assession IDs (duplicate rows in GISAID)
-  distinct() #24,279, downloaded 6/20/2023
+  #filter(gisaid_epi_isl %!in% c("EPI_ISL_17728121")) %>% #2022-12-29 wasn't available at initial download)
+  distinct() #24,269, downloaded 6/10/2023
 
-metadata <- read_tsv("C:/Users/gev25289/Desktop/xps/georgia old/gisaid/complete delta genomes/gisaid_metadata.combined.tsv") %>%
+# Complete genomes, all lineages
+metadata <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia old/gisaid/complete delta genomes/gisaid_metadata.combined.tsv") %>%
   filter(strain != "strain") %>% mutate(date = as.Date(date, "%Y-%m-%d")) %>%
   select(-length) %>%
   mutate(date_submitted = as.Date(date_submitted, "%Y-%m-%d")) %>%

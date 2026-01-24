@@ -1,0 +1,111 @@
+---
+title: "Select Monophyletic Group"
+author: "Leke Lyu"
+date: "09/09/2022"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=120))
+```
+
+Load the source code
+
+```{r, echo=FALSE}
+library(magrittr)
+library(ape)
+library(stringr)
+library(ggtree)
+
+pathToRoot <- function(tre, node, path=NULL){
+  
+  if(is.null(path)) path <- c(node)
+  
+  root <- setdiff(tre$edge[,1], tre$edge[,2])
+  if(node == root){
+    stop("The input node is the root")
+  }else{
+    parent <- tre$edge[,1][node == tre$edge[,2]]
+    path <- c(path, parent)
+    if(parent == root){
+      return(path)
+    }else{
+      pathToRoot(tre, parent, path)
+    }
+  }
+  
+}
+
+isParent <- function(tre, node1, node2){
+  
+  path1 <- pathToRoot(tre, node1)
+  path2 <- pathToRoot(tre, node2)
+  length(intersect(path1, path2)) == length(path1)
+  
+}
+
+selectMonophyleticGroup <- function(tre, nodes){
+  
+  if(length(nodes) < 2){
+    return(nodes)
+  }else{
+    newNodes <- c(nodes[1])
+    for(i in 2:length(nodes)){
+      add=T
+      for(j in 1:length(newNodes)){
+        if(isParent(tre, newNodes[j], nodes[i])){
+          add=F
+          break
+        }else if(isParent(tre, nodes[i], newNodes[j])){
+          newNodes[j]=nodes[i]
+          add=F
+        }
+      }
+      if(add==T){
+        newNodes <- c(newNodes, nodes[i])
+      }else{
+        newNodes <- unique(newNodes)
+      }
+    }
+    return(newNodes)
+  }
+  
+}
+
+```
+
+Generate rtree
+
+```{r, echo=FALSE}
+size <- 50
+tre <- rtree(50)
+ggtree(tre) + geom_text(aes(label=node), hjust=-.3)
+```
+
+Generate list of 10 nodes
+
+```{r, echo=FALSE}
+nodes <- sample((size+2):(2*size-1), 10, replace=F)
+```
+
+Test the selectMonophyleticGroup function
+
+```{r, echo=FALSE}
+newNodes <- selectMonophyleticGroup(tre, nodes)
+```
+
+Show the result
+
+```{r, echo=FALSE}
+p1 <- ggtree(tre) + 
+  geom_hilight(node=nodes, fill="steelblue", alpha=.6)
+p2 <- ggtree(tre) + 
+  geom_hilight(node=newNodes, fill="steelblue", alpha=.6)
+p1|p2
+```
