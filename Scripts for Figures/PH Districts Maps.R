@@ -3,7 +3,7 @@ lapply(c(
   "RColorBrewer", "ggspatial", "stats", "phylotools", "DescTools", "lsr", "readxl", "gtools", "gridExtra"), library, character.only = TRUE)
 
 options(scipen=999)
-source("C:/Users/gev25289/Desktop/xps/georgia/code/functions.R")
+source("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/GitHub/Functions.R")
 
 # FIPS to county name: https://www.nrcs.usda.gov/wps/portal/nrcs/detail/ga/home/?cid=nrcs143_013697
 # Nice tutorial: https://kelseyandersen.github.io/DataVizR/mapping.html
@@ -52,7 +52,7 @@ weightedsub_metadata$public_health_district<- gsub("_", " ", weightedsub_metadat
 weightedsub_metadata_ag <- weightedsub_metadata %>% group_by(public_health_district) %>% summarize(subsampled_seqs=n())
 
 #Load the shapefile 
-shp <- st_read("C:/Users/gev25289/Desktop/xps/georgia/raw data/tl_2019_13_cousub/tl_2019_13_cousub.shp")
+shp <- st_read("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/raw data/tl_2019_13_cousub/tl_2019_13_cousub.shp")
 shp <- shp %>% mutate(FIPS = paste(STATEFP, COUNTYFP, sep = ""))
 
 ggplot() + 
@@ -60,7 +60,7 @@ ggplot() +
   ggtitle("Map of Georgia Counties") + 
   coord_sf()
 
-fips <- read.csv("C:/Users/gev25289/Desktop/xps/georgia/raw data/County FIPS.csv")
+fips <- read.csv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/raw data/County FIPS.csv")
 shp <- shp %>% left_join(fips, by = "FIPS") %>% rename("location" = "Name")
 shp <- public_health_district(shp)
 
@@ -96,7 +96,7 @@ ggplot() +
     legend.margin = margin(t = 0, b = 0, l = 0, r = 0)
   )
 
-ggsave("C:/Users/gev25289/Desktop/december clusters/figures/ph county map.pdf", width = 24, height = 24, units = "cm")
+ggsave("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Figures/Figures PDF/Supplementary Figures/Supplementary Figure 3.pdf", width = 24, height = 24, units = "cm")
 
 ph_levels <- c("Northwest", "North Georgia", "North", "Cobb-Douglas", "Fulton", "Clayton", "GNR", "DeKalb", "Northeast", "District 4", "North Central", "East Central", "West Central", "South Central", "Southwest", "South", "Southeast", "Coastal")
 

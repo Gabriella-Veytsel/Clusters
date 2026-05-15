@@ -15,19 +15,19 @@ library(devtools)
 install_github("helixcn/phylotools", build_vignettes = TRUE)
 library(phylotools) #read.fasta
 
-source("C:/Users/gev25289/Desktop/xps/georgia/code/functions.R")
+source("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/GitHub/Functions.R")
 `%!in%` = Negate(`%in%`)
 
 #Import data 24,270 
-metadata <- read_tsv("C:/Users/gev25289/Desktop/xps/georgia/GISAID/georgia delta complete high_cov collect/combined.tsv") %>%
+metadata <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/georgia delta complete high_cov collect/combined.tsv") %>%
   filter(strain != "strain") %>% mutate(date = as.Date(date, "%Y-%m-%d")) %>%
   mutate(date_submitted = as.Date(date_submitted, "%Y-%m-%d")) %>% 
   filter(gisaid_epi_isl %!in% c("EPI_ISL_3640412", "EPI_ISL_3640461")) #When matching to fasta, discovered that 2 isolates (GISAID Name: hCoV-19/USA/GA-GD-081721-21072022899/2021 and hCoV-19/USA/GA-GD-081721-21071922011/2021) each have 2 GISAID Assession IDs (duplicate rows in GISAID)
 
-fasta <- read.fasta("C:/Users/gev25289/Desktop/xps/georgia/GISAID/georgia delta complete high_cov collect/combined.fasta") 
+fasta <- phylotools::read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/georgia delta complete high_cov collect/combined.fasta") 
 
 #case data
-outbreak <- read_csv("C:/Users/gev25289/Desktop/xps/georgia/raw data/epicurve_rpt_date.csv") %>% 
+outbreak <- read_csv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/raw data/epicurve_rpt_date.csv") %>% 
   filter(measure == "county_stats") %>%
   select(county, report_date, total_cases) #total cases = PCR confirmed + antigen positive
 
@@ -45,8 +45,8 @@ outbreak_district_ga <- public_health_district_county(outbreak) %>%
 #aggregate cases by public health district : figure
 ph_cases <- outbreak_district_ga %>% group_by(public_health_district) %>% summarize(total_cases = sum(cases))
 
-NS3 <- read_csv("C:/Users/gev25289/Desktop/xps/georgia/raw data/NS3.csv") %>% dplyr::select(c(`GISAID Accession`, `GISAID Name`, Zip)) %>% distinct()
-ELR <- read_csv("C:/Users/gev25289/Desktop/xps/georgia/raw data/ELR.csv") %>% dplyr::select(c(`GISAID Accession`, `GISAID Name`, Zip)) %>% distinct()
+NS3 <- read_csv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/raw data/NS3.csv") %>% dplyr::select(c(`GISAID Accession`, `GISAID Name`, Zip)) %>% distinct()
+ELR <- read_csv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/raw data/ELR.csv") %>% dplyr::select(c(`GISAID Accession`, `GISAID Name`, Zip)) %>% distinct()
 #All I need is zip code from this dataset
 
 #Clean zip code field
@@ -127,9 +127,10 @@ delta_fasta <- delta_fasta %>%
                         delta_fasta$date, 
                         delta_fasta$epi_week,  
                         delta_fasta$location, sep = "/"))
+#write_tsv(delta_fasta, "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/delta_fasta.fasta")
 
 #WEIGHTED SUBSAMPLING STRATEGY FOR GEORGIA SEQUENCES
-#########################################################################################################################
+####################################################
 delta_fasta$weight <- delta_fasta$cases/delta_fasta$total_cases_ga #weight
 
 weighted_subsampling <- function(data, seed) {
@@ -139,34 +140,86 @@ weighted_subsampling <- function(data, seed) {
   return(wk_weight)
 }
 
-dat2fasta(weighted_subsampling(delta_fasta, seed=101), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub.fasta") #original
-dat2fasta(weighted_subsampling(delta_fasta, seed=50), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep1.fasta")
-dat2fasta(weighted_subsampling(delta_fasta, seed=30), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep2.fasta")
-dat2fasta(weighted_subsampling(delta_fasta, seed=500), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep3.fasta")
-dat2fasta(weighted_subsampling(delta_fasta, seed=9), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep4.fasta")
+#dat2fasta(weighted_subsampling(delta_fasta, seed=101), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub.fasta") #original
+#dat2fasta(weighted_subsampling(delta_fasta, seed=50), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep1.fasta")
+#dat2fasta(weighted_subsampling(delta_fasta, seed=30), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep2.fasta")
+#dat2fasta(weighted_subsampling(delta_fasta, seed=500), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep3.fasta")
+#dat2fasta(weighted_subsampling(delta_fasta, seed=9), "C:/Users/gev25289/Desktop/xps/georgia/nextstrain/weighted_sub_rep4.fasta")
+
+#Uniform Subsampling Strategy for Georgia Sequences
+###################################################
+uniform_subsampling_week <- function(data, seed, prop) {
+  set.seed(seed)
+  
+  data %>%
+    mutate(week_id = paste(epi_year, epi_week, sep = "_")) %>%
+    group_by(week_id) %>%
+    slice_sample(prop = prop) %>%
+    ungroup() %>%
+    select(strain, seq.text) %>%
+    rename(seq.name = strain)
+}
+
+#dat2fasta(uniform_subsampling_week(delta_fasta, seed=101, prop = 0.1), "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.1.fasta")
+#dat2fasta(uniform_subsampling_week(delta_fasta, seed=50, prop = 0.2), "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.2.fasta")
+#dat2fasta(uniform_subsampling_week(delta_fasta, seed=30, prop = 0.3), "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.3.fasta")
+
+#dat2fasta(uniform_subsampling_week(delta_fasta, seed=500, prop = 0.4), "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.4.fasta")
+#dat2fasta(uniform_subsampling_week(delta_fasta, seed=9, prop = 0.5), "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.5.fasta")
+
+uniform_sub_0.1 <- phylotools::read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.1.fasta")
+uniform_sub_0.2 <- phylotools::read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.2.fasta")
+uniform_sub_0.3 <- phylotools::read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.3.fasta")
+uniform_sub_0.4 <- phylotools::read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.4.fasta")
+uniform_sub_0.5 <- phylotools::read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/nextstrain/uniform_sub_0.5.fasta")
 
 #GLOBAL CONTEXTUAL SEQUENCES
 #########################################################################################################################
 #Download those 50k genomes from GISAID, will serve as a dataset to "blast" focal sequences against (Nextstrain's proximity score)
-contextual_metadata <- read.delim("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/combined.tsv", 
-                                  quote = "", row.names = NULL, stringsAsFactors = FALSE) %>%
-  filter(strain != "strain") %>% rename(loc = location) %>% rename(div = division) #I don't know what's up with this file, but it won't read as tsv. Have to disable quoting like this
-contextual_metadata <- contextual_metadata %>% filter(div != "Georgia")
-contextual_metadata$epiweek <- lubridate::epiweek(contextual_metadata$date)
+contextual_fasta1 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351282239.sequences.fasta")
+contextual_fasta2 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351517420.sequences.fasta")
+contextual_fasta3 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351754831.sequences.fasta")
+contextual_fasta4 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351952484.sequences.fasta")
+contextual_fasta5 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352142926.sequences.fasta")
+contextual_fasta6 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352346092.sequences.fasta")
+contextual_fasta7 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352559319.sequences.fasta")
+contextual_fasta8 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352769608.sequences.fasta")
+contextual_fasta9 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352966476.sequences.fasta")
+contextual_fasta10 <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686353166160.sequences.fasta")
+contextual_fasta <- bind_rows(contextual_fasta1, contextual_fasta2, contextual_fasta3, contextual_fasta4, contextual_fasta5, contextual_fasta6, contextual_fasta7, contextual_fasta8, contextual_fasta9, contextual_fasta10)
+dat2fasta(contextual_fasta, "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/combined.fasta")
+
+contextual_metadata1 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351282239.metadata.tsv")
+contextual_metadata2 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351517420.metadata.tsv")
+contextual_metadata3 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351754831.metadata.tsv")
+contextual_metadata4 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686351952484.metadata.tsv")
+contextual_metadata5 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352142926.metadata.tsv")
+contextual_metadata6 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352346092.metadata.tsv")
+contextual_metadata7 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352559319.metadata.tsv")
+contextual_metadata8 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352769608.metadata.tsv")
+contextual_metadata9 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686352966476.metadata.tsv")
+contextual_metadata10 <- read_tsv("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/1686353166160.metadata.tsv")
+contextual_metadata <- bind_rows(contextual_metadata1, contextual_metadata2, contextual_metadata3, contextual_metadata4, contextual_metadata5, contextual_metadata6, contextual_metadata7, contextual_metadata8, contextual_metadata9, contextual_metadata10)
+
+#contextual_metadata <- read.delim("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia old/gisaid/50k dataset for contextual samples/contextual_metadata.tsv", quote = "", row.names = NULL, stringsAsFactors = FALSE) #I don't know what's up with this file, but it won't read as tsv. Have to disable quoting like this
+contextual_metadata <- contextual_metadata %>% filter(strain != "strain") %>% select(-c(location)) 
+contextual_metadata <- contextual_metadata %>% filter(!(country == "USA" & division == "Georgia")) 
+contextual_metadata$week <- lubridate::week(contextual_metadata$date)
 contextual_metadata$year <- lubridate::year(contextual_metadata$date)
-contextual_metadata$week_year <- paste(contextual_metadata$year, contextual_metadata$epiweek, sep = "_")
-contextual_metadata$location <- "OOS"
+contextual_metadata$week_year <- paste(contextual_metadata$year, contextual_metadata$week, sep = "_")
+#contextual_metadata$location <- "OOS"
 contextual_metadata$division <- "OOS"
+write_tsv(contextual_metadata, "C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia/GISAID/global delta complete high_cov collect/extracted tar files/contextual_metadata.tsv")
 
-set.seed(105)
-contextual_universal <- contextual_metadata %>% group_by(region, week_year) %>% slice_sample(n=33)
+#set.seed(105)
+contextual_universal <- contextual_metadata %>% group_by(region, year, week) %>% slice_sample(n=37)
 
-contextual_fasta <- read.fasta("C:/Users/u6070907/Box/UGA/Manuscript - Clusters/Analysis/georgia old/gisaid/50k dataset for contextual samples/contextual_sequences.fasta")
+contextual_fasta <- read.fasta()
 contextual_fasta <- contextual_fasta %>% distinct()
-contextual_fasta5000 <- contextual_fasta %>% left_join(contextual_universal, by = c("seq.name" = "strain"))
+#contextual_fasta5000 <- contextual_fasta %>% left_join(contextual_universal, by = c("seq.name" = "strain"))
 
-dat2fasta(contextual_fasta5000, "C:/Users/gev25289/Desktop/xps/georgia/contextual_universal.fasta")
-export(contextual_universal, "C:/Users/gev25289/Desktop/xps/georgia/contextual_universal.tsv")
+#dat2fasta(contextual_fasta5000, "C:/Users/gev25289/Desktop/xps/georgia/contextual_universal.fasta")
+#export(contextual_universal, "C:/Users/gev25289/Desktop/xps/georgia/contextual_universal.tsv")
 
 #Reference tsv
 references_metadata <- read_tsv("D:/georgia/references_metadata.tsv") 
